@@ -78,10 +78,15 @@ function menu() {
             echo_color "    $game_path" | sed "s#$SAVE_DIR/###"
         done
         echo_color 'ou'
-        echo_color '    quitter ?'
+        echo_color '    sauver (git push) et quitter ?'
+        echo_color '    quitter (la progression locale est sauvegardée) ?'
 
         read rep
-        if [[ "$rep" =~ ^[qQ].* ]]; then
+        if [[ "$rep" =~ ^[sS].* ]]; then
+            echo_color "Sauvegarde"
+            git push
+            exit
+        elif [[ "$rep" =~ ^[qQ].* ]]; then
             exit
         fi
 
