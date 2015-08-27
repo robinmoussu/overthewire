@@ -20,15 +20,19 @@
 
 SAVE_DIR=.
 
+function echo_color() {
+    echo "[1;34m$*[0m"
+}
+
 function play() {
-    path_game=$1
-    game=$(echo $path_game | sed 's#.*/###')
+    game_path=$1
+    game=$(echo $game_path | sed 's#.*/###')
     level=$2
 
     while true; do
-        pass=$(cat $path_game/$level)
+        pass=$(cat $game_path/$level)
         echo "$pass" | xclip -sel clip
-        echo "Mot de passe pour $game, niveau $level: $pass "\
+        echo_color "Mot de passe pour $game, niveau $level: $pass "\
              "(mis dans le presse papier)"
 
         ssh "$game$level@$game.labs.overthewire.org"
@@ -36,14 +40,14 @@ function play() {
         current_level=$level
         level=$(echo "$level + 1" | bc)
 
-        echo "Enregistrer le mot de passe pour $game, niveau $level ? (Oui/non)"
+        echo_color "Enregistrer le mot de passe pour $game, niveau $level ? (Oui/non)"
         read rep
         if [[ "$rep" =~ ^[nN].* ]]; then
             menu
         else
-            save $path_game $level
+            save $game_path $level
 
-            echo 'niveau suivant ? (Oui/non)'
+            echo_color 'niveau suivant ? (Oui/non)'
             read rep
             if [[ "$rep" =~ ^[nN].* ]]; then
                 menu
@@ -54,49 +58,50 @@ function play() {
 }
 
 function save() {
-    path_game=$1
-    game=$(echo $path_game | sed 's#.*/###')
+    game_path=$1
+    game=$(echo $game_path | sed 's#.*/###')
     level=$2
 
-    echo "Mot de passe pour le level $level"
+    echo_color "Mot de passe pour le level $level"
     read pass
-    echo "$pass" > $path_game/$level
-    git add "$path_game/$level"
+    echo "$pass" > $game_path/$level
+    git add "$game_path/$level"
     git commit --allow-empty -m "save $game level $level"
 }
 
 function menu() {
     while true; do
-        echo 'Quel jeu ?'
-        for game in $(find $SAVE_DIR/* -type d) ; do
-            echo "    $game" | sed "s#$SAVE_DIR/###"
+        echo_color 'Quel jeu ?'
+        for game_path in $(find $SAVE_DIR/* -type d) ; do
+            echo_color "    $game_path" | sed "s#$SAVE_DIR/###"
         done
-        echo 'ou'
-        echo '    quitter ?'
+        echo_color 'ou'
+        echo_color '    quitter ?'
 
         read rep
         if [[ "$rep" =~ ^[qQ].* ]]; then
             exit
         fi
 
-        #so rep is a game
-        game=$rep
-        if [[ -d "$SAVE_DIR/$game" ]]; then
-            game_path="$SAVE_DIR/$game"
+        #so rep is a game_path
+        game_path=$rep
+        if [[ -d "$SAVE_DIR/$game_path" ]]; then
+            game_path="$SAVE_DIR/$game_path"
         else
             # try autocomple
-            game_path=$(find $SAVE_DIR/* -type d -name "*$game*")
+            game_path=$(find $SAVE_DIR/* -type d -name "*$game_path*")
         fi
         if [[ -d "$game_path" ]]; then
             break
         else
-            echo "Jeu inconnu ou formulation ambigue ($(echo $game_path))"
+            game=$(echo $game_path | sed 's#.*/###')
+            echo_color "Jeu inconnu ou formulation ambigue ($(echo $game_path))"
         fi
     done
     while true; do
-        echo "Quel niveau ?"
+        echo_color "Quel niveau ?"
         for level in $game_path/* ; do
-            echo "    $level" | sed "s#$game_path/###"
+            echo_color "    $level" | sed "s#$game_path/###"
         done
         read level
         if [[ ! -f "$SAVE_DIR/$level" ]]; then
@@ -107,11 +112,10 @@ function menu() {
         if [[ -f $game_path/$level ]]; then
             break
         else
-            echo "Niveau inconnu ($level)"
+            echo_color "Niveau inconnu ($level)"
         fi
     done
     play $game_path $level
 }
-
 
 menu
