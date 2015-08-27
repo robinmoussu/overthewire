@@ -30,22 +30,23 @@ function play() {
     level=$2
 
     while true; do
-        pass=$(cat $game_path/$level)
+        current_level=$level
+        next_level=$(echo "$current_level + 1" | bc)
+
+        pass=$(cat $game_path/$current_level)
         echo "$pass" | xclip -sel clip
-        echo_color "Mot de passe pour $game, niveau $level: $pass "\
+        echo_color "Mot de passe pour $game, niveau $current_level: $pass "\
              "(mis dans le presse papier)"
 
-        ssh "$game$level@$game.labs.overthewire.org"
+        xdg-open http://overthewire.org/wargames/$game/$game$next_level.html &
+        ssh "$game$current_level@$game.labs.overthewire.org"
 
-        current_level=$level
-        level=$(echo "$level + 1" | bc)
-
-        echo_color "Enregistrer le mot de passe pour $game, niveau $level ? (Oui/non)"
+        echo_color "Enregistrer le mot de passe pour $game, niveau $next_level ? (Oui/non)"
         read rep
         if [[ "$rep" =~ ^[nN].* ]]; then
             menu
         else
-            save $game_path $level
+            save $game_path $next_level
 
             echo_color 'niveau suivant ? (Oui/non)'
             read rep
@@ -54,6 +55,7 @@ function play() {
                 break
             fi
         fi
+        level=$next_level
     done
 }
 
