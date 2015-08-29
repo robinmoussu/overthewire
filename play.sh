@@ -107,13 +107,14 @@ function menu() {
     done
     while true; do
         echo_color "Quel niveau ?"
-        for level in $game_path/* ; do
-            echo_color "    $level" | sed "s#$game_path/###"
+        level_list=$( ls  $game_path/* | sed "s#$game_path/###" | sort -g)
+        for level in $level_list ; do
+            echo_color "    $level"
         done
         echo_color "Laisser vide pour le choix par défaut"
         read level
         if [[ -z "$level" ]]; then
-            level="$($game_path/* | tail -n 1)"
+            level="$(echo $level_list | tr ' ' '\n' | tail -n 1)"
         fi
         if [[ ! -f "$SAVE_DIR/$level" ]]; then
             # try autocomple
